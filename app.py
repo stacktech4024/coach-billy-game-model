@@ -156,6 +156,95 @@ def _add_zone_overlays(fig):
         fig.add_annotation(x=start + 12.5, y=62, text=label, showarrow=False, font=dict(color="white", size=10))
 
 
+def _add_field_geography_overlays(fig):
+    """Add B Diploma field geography overlays (zones and channels) with labels."""
+    _add_zone_overlays(fig)
+    channel_height = 64 / 5
+    for idx in range(1, 5):
+        fig.add_shape(
+            type="line",
+            x0=0,
+            y0=idx * channel_height,
+            x1=100,
+            y1=idx * channel_height,
+            line=dict(color="rgba(255,255,255,0.35)", width=1, dash="dash"),
+        )
+    for idx, label in enumerate(["Channel 1", "Channel 2", "Channel 3", "Channel 4", "Channel 5"]):
+        fig.add_annotation(
+            x=3,
+            y=(idx * channel_height) + (channel_height / 2),
+            text=label,
+            showarrow=False,
+            font=dict(color="white", size=9),
+            xanchor="left",
+            bgcolor="rgba(0,0,0,0.25)",
+        )
+
+
+def _build_pitch_geography_figure():
+    """Build a dedicated pitch geography figure showing both zones and channels."""
+    fig = go.Figure()
+    fig.update_layout(shapes=_pitch_shapes())
+    _add_field_geography_overlays(fig)
+    fig.update_layout(
+        xaxis=dict(range=[-1, 101], visible=False),
+        yaxis=dict(range=[-1, 65], visible=False, scaleanchor="x", scaleratio=1),
+        plot_bgcolor="#1f2f2b",
+        paper_bgcolor="#0f172a",
+        margin=dict(l=6, r=6, t=6, b=6),
+    )
+    return fig
+
+
+def _build_moments_flow_figure():
+    """Build an interactive flow diagram showing moments-of-the-game connectivity."""
+    moments = get_game_model()["how_we_want_to_play"]["moments_of_the_game"]
+    points = [(15, 50), (50, 85), (85, 50), (50, 15)]
+    if len(moments) != 4:
+        points = [(10 + (idx * (80 / max(len(moments) - 1, 1))), 50) for idx in range(len(moments))]
+
+    fig = go.Figure()
+    fig.add_trace(
+        go.Scatter(
+            x=[pt[0] for pt in points],
+            y=[pt[1] for pt in points],
+            mode="markers+text",
+            text=moments,
+            textposition="middle center",
+            marker=dict(size=42, color="#1d4ed8", line=dict(color="white", width=2)),
+            hovertemplate="%{text}<extra>Moment</extra>",
+            showlegend=False,
+        )
+    )
+    for idx in range(len(points)):
+        start = points[idx]
+        end = points[(idx + 1) % len(points)]
+        fig.add_annotation(
+            x=end[0],
+            y=end[1],
+            ax=start[0],
+            ay=start[1],
+            xref="x",
+            yref="y",
+            axref="x",
+            ayref="y",
+            showarrow=True,
+            arrowhead=3,
+            arrowsize=1,
+            arrowwidth=2,
+            arrowcolor="#93c5fd",
+            text="",
+        )
+    fig.update_layout(
+        xaxis=dict(range=[0, 100], visible=False),
+        yaxis=dict(range=[0, 100], visible=False, scaleanchor="x", scaleratio=1),
+        margin=dict(l=6, r=6, t=6, b=6),
+        plot_bgcolor="#0f172a",
+        paper_bgcolor="#0f172a",
+    )
+    return fig
+
+
 def _build_tactical_figure(phase_key, selected_player=None, step_index=None, selected_player_position=None):
     """Create an 11v11 tactical board for a phase with optional focus player and step index."""
     phase = get_phase_config(phase_key)
@@ -463,16 +552,7 @@ def _render_game_model_page(selected_player):
             st.markdown(f"- {tactic}")
 
     st.subheader("Pitch Geography")
-    zone_fig = go.Figure()
-    zone_fig.update_layout(shapes=_pitch_shapes())
-    _add_zone_overlays(zone_fig)
-    zone_fig.update_layout(
-        xaxis=dict(range=[-1, 101], visible=False),
-        yaxis=dict(range=[-1, 65], visible=False, scaleanchor="x", scaleratio=1),
-        plot_bgcolor="#1f2f2b",
-        paper_bgcolor="#0f172a",
-        margin=dict(l=6, r=6, t=6, b=6),
-    )
+    zone_fig = _build_pitch_geography_figure()
     st.plotly_chart(zone_fig, use_container_width=True, config={"displayModeBar": False})
 
     st.subheader("Future Canadian Player: Skill Sets / Behaviours")
@@ -582,6 +662,12 @@ def _render_philosophy_diagrams_page(selected_player):
             use_container_width=True,
             config={"displayModeBar": False},
         )
+
+    st.subheader("Moments of the Game Connection")
+    st.plotly_chart(_build_moments_flow_figure(), use_container_width=True, config={"displayModeBar": False})
+
+    st.subheader("Field Geography (Zones + Channels)")
+    st.plotly_chart(_build_pitch_geography_figure(), use_container_width=True, config={"displayModeBar": False})
 
     st.subheader("Tactical Shape Link")
     c1, c2 = st.columns(2)
