@@ -312,8 +312,8 @@ def get_player_movement_positions(phase_key, player_number):
         return []
 
     steps = len(phase["ball_path"])
-    positions = [current_position]
-    for step in range(1, steps):
+    positions = []
+    for step in range(steps):
         for arrow_index, arrow in enumerate(phase["movement_arrows"]):
             if arrow_index > step or arrow["team"] != "our":
                 continue

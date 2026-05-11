@@ -625,5 +625,7 @@ elif selected_page == "Attacking vs Defending Organization":
     _render_attacking_defending_page(selected_player)
 elif selected_page == "Animated Player Role Walkthrough":
     _render_player_role_animation_page(selected_player)
-else:
+elif selected_page == "Interactive Philosophy Diagrams":
     _render_philosophy_diagrams_page(selected_player)
+else:
+    _render_game_model_page(selected_player)
