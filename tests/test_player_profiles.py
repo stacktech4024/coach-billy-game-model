@@ -111,10 +111,11 @@ class TestPhaseConfiguration(unittest.TestCase):
 
     def test_get_player_movement_positions_updates_position_when_player_arrow_exists(self):
         positions = get_player_movement_positions("attacking_organization", 7)
+        expected_end = tuple(PHASES["attacking_organization"]["movement_arrows"][1]["end"])
 
         self.assertEqual(positions[0], BASE_FORMATIONS["1-4-4-2"][7])
-        self.assertEqual(positions[1], (69, 56))
-        self.assertTrue(all(pos == (69, 56) for pos in positions[1:]))
+        self.assertEqual(positions[1], expected_end)
+        self.assertTrue(all(pos == expected_end for pos in positions[1:]))
 
 
 class TestOppositionFormationIntegrity(unittest.TestCase):

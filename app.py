@@ -33,6 +33,8 @@ COLORS = {
     "ball": "#f8f9fa",
     "zone": "rgba(255, 255, 255, 0.08)",
 }
+ANIMATION_FRAME_DURATION_MS = 900
+ANIMATION_TRANSITION_DURATION_MS = 250
 
 st.markdown(
     """
@@ -371,7 +373,11 @@ def _build_player_animation_figure(phase_key, selected_player):
                         method="animate",
                         args=[
                             None,
-                            {"frame": {"duration": 900, "redraw": True}, "fromcurrent": True, "transition": {"duration": 250}},
+                            {
+                                "frame": {"duration": ANIMATION_FRAME_DURATION_MS, "redraw": True},
+                                "fromcurrent": True,
+                                "transition": {"duration": ANIMATION_TRANSITION_DURATION_MS},
+                            },
                         ],
                     ),
                     dict(label="⏸ Pause", method="animate", args=[[None], {"frame": {"duration": 0, "redraw": False}, "mode": "immediate"}]),
