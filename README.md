@@ -3,10 +3,13 @@
 This repository contains an interactive, web-based soccer game model and coaching philosophy portfolio for Coach Darren Billy's Canada Soccer B Diploma.
 
 ## Features
-- Visual interactive 1-4-4-2 formation diagram (select players by standard soccer number)
-- Separate detailed positional profile for each player (1-11)
-- Summary of Coach Billy's game model, philosophy, style of play, and coaching principles
-- Modular, extensible code ready for additional analytics, numpy integrations, and advanced soccer visualization
+- Advanced interactive 11v11 tactical board with phase toggles
+- Professional soccer field visualization with full markings, grass-striping, and zone overlays
+- Interactive player markers with jersey numbers, team colors, and focused player highlight/glow
+- Integrated player info card with profile, tactical expectations, and key skill sets
+- Ball path and movement-arrow visualizations for attacking/defending organizations and transitions
+- Dedicated stepwise “Player & Ball Movement” board for frame-by-frame tactical progression
+- Full game model content sections (philosophy, methodology, style, systems, strategies, tactics, behaviours)
 
 ## Quick Start
 
