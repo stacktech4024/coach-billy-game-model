@@ -158,15 +158,16 @@ def _build_tactical_figure(phase_key, selected_player=None, step_index=None, sel
     """Create an 11v11 tactical board for a phase with optional focus player and step index."""
     phase = get_phase_config(phase_key)
     profiles = get_player_profiles()
-    if selected_player in phase["our_positions"] and selected_player_position is not None:
-        phase["our_positions"][selected_player] = tuple(selected_player_position)
+    our_positions = {num: tuple(position) for num, position in phase["our_positions"].items()}
+    if selected_player in our_positions and selected_player_position is not None:
+        our_positions[selected_player] = tuple(selected_player_position)
 
     fig = go.Figure()
     fig.update_layout(shapes=_pitch_shapes())
 
-    our_numbers = sorted(phase["our_positions"].keys())
-    our_x = [phase["our_positions"][num][0] for num in our_numbers]
-    our_y = [phase["our_positions"][num][1] for num in our_numbers]
+    our_numbers = sorted(our_positions.keys())
+    our_x = [our_positions[num][0] for num in our_numbers]
+    our_y = [our_positions[num][1] for num in our_numbers]
 
     marker_sizes = [20 if selected_player == num else 15 for num in our_numbers]
     fig.add_trace(
@@ -192,8 +193,8 @@ def _build_tactical_figure(phase_key, selected_player=None, step_index=None, sel
         )
     )
 
-    if selected_player in phase["our_positions"]:
-        x, y = phase["our_positions"][selected_player]
+    if selected_player in our_positions:
+        x, y = our_positions[selected_player]
         fig.add_trace(
             go.Scatter(
                 x=[x],

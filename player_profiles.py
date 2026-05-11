@@ -315,7 +315,7 @@ def get_player_movement_positions(phase_key, player_number):
     positions = [current_position]
     for step in range(1, steps):
         for arrow_index, arrow in enumerate(phase["movement_arrows"]):
-            if arrow_index > step - 1 or arrow["team"] != "our":
+            if arrow_index > step or arrow["team"] != "our":
                 continue
             numbers = [int(match) for match in re.findall(r"#(\d+)", arrow["label"])]
             if player_number in numbers:

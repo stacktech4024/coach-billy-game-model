@@ -113,9 +113,8 @@ class TestPhaseConfiguration(unittest.TestCase):
         positions = get_player_movement_positions("attacking_organization", 7)
 
         self.assertEqual(positions[0], BASE_FORMATIONS["1-4-4-2"][7])
-        self.assertEqual(positions[1], BASE_FORMATIONS["1-4-4-2"][7])
-        self.assertEqual(positions[2], (69, 56))
-        self.assertTrue(all(pos == (69, 56) for pos in positions[2:]))
+        self.assertEqual(positions[1], (69, 56))
+        self.assertTrue(all(pos == (69, 56) for pos in positions[1:]))
 
 
 class TestOppositionFormationIntegrity(unittest.TestCase):
