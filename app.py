@@ -406,7 +406,7 @@ def _build_content_sunburst(title, section_data):
         if isinstance(value, list):
             for idx, item in enumerate(value, start=1):
                 ids.append(f"{key_id}:{idx}")
-                labels.append(f"Item {idx}")
+                labels.append(f"{key.replace('_', ' ').title()} {idx}")
                 parents.append(key_id)
                 customdata.append(item)
         else:
@@ -437,9 +437,13 @@ def _build_content_sunburst(title, section_data):
 def _build_player_animation_figure(phase_key, selected_player):
     """Build animated tactical frames showing ball progression and selected player movement."""
     phase = get_phase_config(phase_key)
+    default_position = phase["our_positions"].get(selected_player)
+    if default_position is None:
+        return _build_tactical_figure(phase_key, selected_player=selected_player, step_index=0)
+
     player_positions = get_player_movement_positions(phase_key, selected_player)
     if not player_positions:
-        player_positions = [phase["our_positions"].get(selected_player)] * len(phase["ball_path"])
+        player_positions = [default_position] * len(phase["ball_path"])
 
     base_fig = _build_tactical_figure(
         phase_key,

@@ -306,7 +306,13 @@ def get_phase_config(phase_key):
 
 
 def get_player_movement_positions(phase_key, player_number):
-    """Return stepwise player coordinates for one phase keyed to the phase ball progression."""
+    """Return a list of (x, y) coordinates per phase step for one player.
+
+    Coordinates are normalized to the 100x64 pitch used throughout the app.
+    If the player number is not present in the phase formation, an empty list is returned.
+    Movement is inferred from chronological `movement_arrows` labels that include jersey tags
+    in the format `#<number>` (for example: `#7 wide run`).
+    """
     phase = get_phase_config(phase_key)
     current_position = phase["our_positions"].get(player_number)
     if current_position is None:
