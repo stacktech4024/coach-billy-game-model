@@ -5,7 +5,8 @@ except ModuleNotFoundError:
     st.error(
         """Missing dependency: plotly
 
-Install project dependencies with:
+Install with one of:
+pip install plotly
 pip install -r requirements.txt"""
     )
     st.stop()
