@@ -308,12 +308,12 @@ def _build_content_sunburst(title, section_data):
         if isinstance(value, list):
             for idx, item in enumerate(value, start=1):
                 ids.append(f"{key_id}:{idx}")
-                labels.append(f"Point {idx}")
+                labels.append(f"Item {idx}")
                 parents.append(key_id)
                 customdata.append(item)
         else:
             ids.append(f"{key_id}:detail")
-            labels.append("Detail")
+            labels.append("Value")
             parents.append(key_id)
             customdata.append(value)
 

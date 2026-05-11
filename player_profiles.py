@@ -314,8 +314,9 @@ def get_player_movement_positions(phase_key, player_number):
     steps = len(phase["ball_path"])
     positions = []
     for step in range(steps):
-        for arrow_index, arrow in enumerate(phase["movement_arrows"]):
-            if arrow_index > step or arrow["team"] != "our":
+        # Movement arrows are ordered chronologically; apply all arrows whose index is <= current step.
+        for movement_step_index, arrow in enumerate(phase["movement_arrows"]):
+            if movement_step_index > step or arrow["team"] != "our":
                 continue
             numbers = [int(match) for match in re.findall(r"#(\d+)", arrow["label"])]
             if player_number in numbers:
