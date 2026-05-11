@@ -43,8 +43,20 @@ st.markdown(
 
 
 def _pitch_shapes():
+    """Build the base pitch drawing as Plotly shape definitions."""
     length = PITCH_BOUNDS["length"]
     width = PITCH_BOUNDS["width"]
+    center_x = length / 2
+    center_y = width / 2
+    center_circle_radius = 8
+    penalty_area_depth = 16
+    goal_area_depth = 5
+    penalty_spot_distance = 11
+    penalty_area_y0 = 14
+    penalty_area_y1 = 50
+    goal_area_y0 = 24
+    goal_area_y1 = 40
+
     shapes = [
         dict(type="rect", x0=0, y0=0, x1=length, y1=width, fillcolor=COLORS["pitch_base"], line=dict(width=0))
     ]
@@ -69,23 +81,55 @@ def _pitch_shapes():
     shapes.extend(
         [
             dict(type="rect", x0=0, y0=0, x1=length, y1=width, line=line_style, fillcolor="rgba(0,0,0,0)"),
-            dict(type="line", x0=length / 2, y0=0, x1=length / 2, y1=width, line=line_style),
-            dict(type="circle", x0=42, y0=24, x1=58, y1=40, line=line_style),
-            dict(type="circle", x0=49, y0=31, x1=51, y1=33, line=dict(color=COLORS["line"], width=2), fillcolor=COLORS["line"]),
-            dict(type="rect", x0=0, y0=14, x1=16, y1=50, line=line_style, fillcolor="rgba(0,0,0,0)"),
-            dict(type="rect", x0=84, y0=14, x1=100, y1=50, line=line_style, fillcolor="rgba(0,0,0,0)"),
-            dict(type="rect", x0=0, y0=24, x1=5, y1=40, line=line_style, fillcolor="rgba(0,0,0,0)"),
-            dict(type="rect", x0=95, y0=24, x1=100, y1=40, line=line_style, fillcolor="rgba(0,0,0,0)"),
-            dict(type="circle", x0=10.5, y0=30.5, x1=11.5, y1=31.5, line=dict(color=COLORS["line"], width=2), fillcolor=COLORS["line"]),
-            dict(type="circle", x0=88.5, y0=30.5, x1=89.5, y1=31.5, line=dict(color=COLORS["line"], width=2), fillcolor=COLORS["line"]),
+            dict(type="line", x0=center_x, y0=0, x1=center_x, y1=width, line=line_style),
+            dict(
+                type="circle",
+                x0=center_x - center_circle_radius,
+                y0=center_y - center_circle_radius,
+                x1=center_x + center_circle_radius,
+                y1=center_y + center_circle_radius,
+                line=line_style,
+            ),
+            dict(
+                type="circle",
+                x0=center_x - 1,
+                y0=center_y - 1,
+                x1=center_x + 1,
+                y1=center_y + 1,
+                line=dict(color=COLORS["line"], width=2),
+                fillcolor=COLORS["line"],
+            ),
+            dict(type="rect", x0=0, y0=penalty_area_y0, x1=penalty_area_depth, y1=penalty_area_y1, line=line_style, fillcolor="rgba(0,0,0,0)"),
+            dict(type="rect", x0=length - penalty_area_depth, y0=penalty_area_y0, x1=length, y1=penalty_area_y1, line=line_style, fillcolor="rgba(0,0,0,0)"),
+            dict(type="rect", x0=0, y0=goal_area_y0, x1=goal_area_depth, y1=goal_area_y1, line=line_style, fillcolor="rgba(0,0,0,0)"),
+            dict(type="rect", x0=length - goal_area_depth, y0=goal_area_y0, x1=length, y1=goal_area_y1, line=line_style, fillcolor="rgba(0,0,0,0)"),
+            dict(
+                type="circle",
+                x0=penalty_spot_distance - 0.5,
+                y0=center_y - 0.5,
+                x1=penalty_spot_distance + 0.5,
+                y1=center_y + 0.5,
+                line=dict(color=COLORS["line"], width=2),
+                fillcolor=COLORS["line"],
+            ),
+            dict(
+                type="circle",
+                x0=length - penalty_spot_distance - 0.5,
+                y0=center_y - 0.5,
+                x1=length - penalty_spot_distance + 0.5,
+                y1=center_y + 0.5,
+                line=dict(color=COLORS["line"], width=2),
+                fillcolor=COLORS["line"],
+            ),
             dict(type="rect", x0=-1, y0=28, x1=0, y1=36, line=line_style, fillcolor="rgba(0,0,0,0)"),
-            dict(type="rect", x0=100, y0=28, x1=101, y1=36, line=line_style, fillcolor="rgba(0,0,0,0)"),
+            dict(type="rect", x0=length, y0=28, x1=length + 1, y1=36, line=line_style, fillcolor="rgba(0,0,0,0)"),
         ]
     )
     return shapes
 
 
 def _add_zone_overlays(fig):
+    """Add four labeled pitch geography zones onto an existing Plotly figure."""
     for start in [0, 25, 50, 75]:
         fig.add_shape(
             type="rect",
@@ -101,6 +145,7 @@ def _add_zone_overlays(fig):
 
 
 def _build_tactical_figure(phase_key, selected_player=None, step_index=None):
+    """Create an 11v11 tactical board for a phase with optional focus player and step index."""
     phase = get_phase_config(phase_key)
     profiles = get_player_profiles()
 
@@ -232,6 +277,7 @@ def _build_tactical_figure(phase_key, selected_player=None, step_index=None):
 
 
 def _render_player_card(player_number):
+    """Render the selected player's profile card, skill set list, and tactical expectations."""
     profile = get_player_profile(player_number)
     if not profile:
         return
@@ -259,6 +305,7 @@ def _render_player_card(player_number):
 
 
 def _render_game_model_page(selected_player):
+    """Render full game-model content and positional spotlight for the selected player."""
     gm = get_game_model()
 
     st.title("Coach Billy Game Model")
@@ -314,6 +361,7 @@ def _render_game_model_page(selected_player):
 
 
 def _render_tactical_board_page(selected_player):
+    """Render tabbed tactical boards for each game phase using a shared player focus."""
     st.title("Dynamic Tactical Board")
     st.caption("11v11 phase views with differentiated teams, tactical movement arrows, and ball-flow visualization.")
 
@@ -331,6 +379,7 @@ def _render_tactical_board_page(selected_player):
 
 
 def _render_movement_board_page(selected_player):
+    """Render stepwise player-and-ball movement progression for a selected phase."""
     st.title("Player & Ball Movement")
     st.caption("Stepwise tactical progression showing team movement, pressing reactions, and ball advancement.")
 

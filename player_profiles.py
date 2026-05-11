@@ -263,33 +263,39 @@ PHASES = {
 }
 
 
-def _mirror_positions(position_map):
+def mirror_positions(position_map):
+    """Mirror normalized player coordinates horizontally across the pitch."""
     return {num: (100 - x, y) for num, (x, y) in position_map.items()}
 
 
 OPPOSITION_FORMATIONS = {
-    "1-4-4-2": _mirror_positions(BASE_FORMATIONS["1-4-4-2"]),
-    "1-4-2-3-1": _mirror_positions(BASE_FORMATIONS["1-4-2-3-1"]),
+    "1-4-4-2": mirror_positions(BASE_FORMATIONS["1-4-4-2"]),
+    "1-4-2-3-1": mirror_positions(BASE_FORMATIONS["1-4-2-3-1"]),
 }
 
 
 def get_player_profile(number):
+    """Return a single player profile by jersey number, or None if missing."""
     return PLAYER_PROFILES.get(number)
 
 
 def get_player_profiles():
+    """Return a deep copy of all player profiles to prevent accidental mutation."""
     return deepcopy(PLAYER_PROFILES)
 
 
 def get_game_model():
+    """Return a deep copy of the full game-model content structure."""
     return deepcopy(GAME_MODEL)
 
 
 def get_phase_keys():
+    """Return available phase keys used by tactical board views."""
     return list(PHASES.keys())
 
 
 def get_phase_config(phase_key):
+    """Return a phase config with derived team/opposition positions for the phase system."""
     phase = deepcopy(PHASES[phase_key])
     system = phase["our_system"]
     phase["our_positions"] = deepcopy(BASE_FORMATIONS[system])
