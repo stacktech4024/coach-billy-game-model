@@ -6,7 +6,7 @@ except ModuleNotFoundError:
         """Missing dependency: plotly
 
 Install dependency with:
-pip install plotly"""
+pip install plotly==5.24.1"""
     )
     st.stop()
 
