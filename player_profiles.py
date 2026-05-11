@@ -4,6 +4,7 @@ from copy import deepcopy
 import re
 
 PITCH_BOUNDS = {"length": 100, "width": 64}
+PLAYER_NUMBER_PATTERN = re.compile(r"#(\d+)")
 
 GAME_MODEL = {
     "who_we_are": {
@@ -318,7 +319,7 @@ def get_player_movement_positions(phase_key, player_number):
         for movement_step_index, arrow in enumerate(phase["movement_arrows"]):
             if movement_step_index > step or arrow["team"] != "our":
                 continue
-            numbers = [int(match) for match in re.findall(r"#(\d+)", arrow["label"])]
+            numbers = [int(match) for match in PLAYER_NUMBER_PATTERN.findall(arrow["label"])]
             if player_number in numbers:
                 current_position = tuple(arrow["end"])
         positions.append(current_position)

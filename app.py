@@ -35,6 +35,9 @@ COLORS = {
 }
 ANIMATION_FRAME_DURATION_MS = 900
 ANIMATION_TRANSITION_DURATION_MS = 250
+MOMENTS_FALLBACK_MARGIN_X = 10
+MOMENTS_FALLBACK_WIDTH_X = 80
+MOMENTS_FALLBACK_CENTER_Y = 50
 
 st.markdown(
     """
@@ -201,7 +204,13 @@ def _build_moments_flow_figure():
     moments = get_game_model()["how_we_want_to_play"]["moments_of_the_game"]
     points = [(15, 50), (50, 85), (85, 50), (50, 15)]
     if len(moments) != 4:
-        points = [(10 + (idx * (80 / max(len(moments) - 1, 1))), 50) for idx in range(len(moments))]
+        points = [
+            (
+                MOMENTS_FALLBACK_MARGIN_X + (idx * (MOMENTS_FALLBACK_WIDTH_X / max(len(moments) - 1, 1))),
+                MOMENTS_FALLBACK_CENTER_Y,
+            )
+            for idx in range(len(moments))
+        ]
 
     fig = go.Figure()
     fig.add_trace(
@@ -714,4 +723,4 @@ elif selected_page == "Animated Player Role Walkthrough":
 elif selected_page == "Interactive Philosophy Diagrams":
     _render_philosophy_diagrams_page(selected_player)
 else:
-    _render_game_model_page(selected_player)
+    st.error("Unknown page selected in navigation.")
