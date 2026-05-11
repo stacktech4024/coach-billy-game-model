@@ -102,12 +102,14 @@ class TestPhaseConfiguration(unittest.TestCase):
     def test_get_player_movement_positions_returns_empty_for_unknown_player(self):
         self.assertEqual(get_player_movement_positions("attacking_organization", 99), [])
 
-    def test_get_player_movement_positions_keeps_static_player_without_tagged_arrows(self):
+    def test_get_player_movement_positions_adds_support_movement_without_tagged_arrows(self):
         positions = get_player_movement_positions("attacking_organization", 1)
         expected_len = len(PHASES["attacking_organization"]["ball_path"])
+        starting_position = BASE_FORMATIONS["1-4-4-2"][1]
 
         self.assertEqual(len(positions), expected_len)
-        self.assertTrue(all(pos == positions[0] for pos in positions))
+        self.assertNotEqual(positions[-1], starting_position)
+        self.assertTrue(all(0 <= pos[0] <= 100 and 0 <= pos[1] <= 64 for pos in positions))
 
     def test_get_player_movement_positions_updates_position_when_player_arrow_exists(self):
         positions = get_player_movement_positions("attacking_organization", 7)
