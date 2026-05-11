@@ -1,5 +1,12 @@
 import streamlit as st
-import plotly.graph_objects as go
+try:
+    import plotly.graph_objects as go
+except ModuleNotFoundError:
+    st.set_page_config(page_title="Coach Billy Game Model", layout="wide")
+    st.error(
+        "Missing dependency: `plotly`.\n\nInstall project dependencies with:\n`pip install -r requirements.txt`"
+    )
+    st.stop()
 
 from player_profiles import (
     PITCH_BOUNDS,
