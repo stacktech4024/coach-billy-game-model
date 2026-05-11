@@ -337,6 +337,7 @@ def get_player_movement_positions(phase_key, player_number):
             positions.append(current_position)
         return positions
 
+    # Higher values apply more aggressive support movement toward the current ball location.
     support_factors = {
         1: 0.04,
         2: 0.11,

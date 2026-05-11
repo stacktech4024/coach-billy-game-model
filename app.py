@@ -30,6 +30,7 @@ COLORS = {
     "our_team": "#00c2ff",
     "our_glow": "rgba(0,194,255,0.25)",
     "opp_team": "#ff6b6b",
+    "highlight": "#facc15",
     "ball": "#f8f9fa",
     "zone": "rgba(255, 255, 255, 0.08)",
 }
@@ -302,7 +303,7 @@ def _build_tactical_figure(phase_key, selected_player=None, step_index=None, sel
                 x=[x],
                 y=[y],
                 mode="markers",
-                marker=dict(size=36, color="rgba(0,0,0,0)", line=dict(color="#facc15", width=3), symbol="circle-open"),
+                marker=dict(size=36, color="rgba(0,0,0,0)", line=dict(color=COLORS["highlight"], width=3), symbol="circle-open"),
                 hoverinfo="skip",
                 showlegend=False,
             )
@@ -347,8 +348,8 @@ def _build_tactical_figure(phase_key, selected_player=None, step_index=None, sel
                 x=[pt[0] for pt in selected_player_path],
                 y=[pt[1] for pt in selected_player_path],
                 mode="lines+markers",
-                line=dict(color="#facc15", width=3),
-                marker=dict(size=7, color="#facc15"),
+                line=dict(color=COLORS["highlight"], width=3),
+                marker=dict(size=7, color=COLORS["highlight"]),
                 hoverinfo="skip",
                 name="Selected player path",
                 showlegend=False,
