@@ -1,5 +1,14 @@
 import streamlit as st
-import plotly.graph_objects as go
+try:
+    import plotly.graph_objects as go
+except ModuleNotFoundError:
+    st.error(
+        """Missing dependency: plotly
+
+Install dependency with:
+pip install plotly==5.24.1"""
+    )
+    st.stop()
 
 from player_profiles import (
     PITCH_BOUNDS,
