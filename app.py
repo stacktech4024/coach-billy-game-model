@@ -30,6 +30,7 @@ COLORS = {
     "our_team": "#00c2ff",
     "our_glow": "rgba(0,194,255,0.25)",
     "opp_team": "#ff6b6b",
+    "highlight": "#facc15",
     "ball": "#f8f9fa",
     "zone": "rgba(255, 255, 255, 0.08)",
 }
@@ -256,7 +257,7 @@ def _build_moments_flow_figure():
     return fig
 
 
-def _build_tactical_figure(phase_key, selected_player=None, step_index=None, selected_player_position=None):
+def _build_tactical_figure(phase_key, selected_player=None, step_index=None, selected_player_position=None, selected_player_path=None):
     """Create an 11v11 tactical board for a phase with optional focus player and step index."""
     phase = get_phase_config(phase_key)
     profiles = get_player_profiles()
@@ -271,7 +272,7 @@ def _build_tactical_figure(phase_key, selected_player=None, step_index=None, sel
     our_x = [our_positions[num][0] for num in our_numbers]
     our_y = [our_positions[num][1] for num in our_numbers]
 
-    marker_sizes = [20 if selected_player == num else 15 for num in our_numbers]
+    marker_sizes = [22 if selected_player == num else 17 for num in our_numbers]
     fig.add_trace(
         go.Scatter(
             x=our_x,
@@ -280,7 +281,7 @@ def _build_tactical_figure(phase_key, selected_player=None, step_index=None, sel
             text=[str(n) for n in our_numbers],
             textposition="middle center",
             textfont=dict(color="white", size=11),
-            marker=dict(color=COLORS["our_team"], size=marker_sizes, line=dict(color="white", width=1.5)),
+            marker=dict(color=COLORS["our_team"], size=marker_sizes, line=dict(color="white", width=2), symbol="circle"),
             customdata=[
                 [
                     f"#{num}",
@@ -302,7 +303,7 @@ def _build_tactical_figure(phase_key, selected_player=None, step_index=None, sel
                 x=[x],
                 y=[y],
                 mode="markers",
-                marker=dict(size=33, color=COLORS["our_glow"], line=dict(width=0)),
+                marker=dict(size=36, color="rgba(0,0,0,0)", line=dict(color=COLORS["highlight"], width=3), symbol="circle-open"),
                 hoverinfo="skip",
                 showlegend=False,
             )
@@ -317,7 +318,7 @@ def _build_tactical_figure(phase_key, selected_player=None, step_index=None, sel
             text=[str(n) for n in opp_numbers],
             textposition="middle center",
             textfont=dict(color="white", size=11),
-            marker=dict(color=COLORS["opp_team"], size=15, line=dict(color="white", width=1.5)),
+            marker=dict(color=COLORS["opp_team"], size=16, line=dict(color="white", width=2), symbol="square"),
             hovertemplate="<b>Opposition #%{text}</b><extra>Opposition XI</extra>",
             name="Opposition XI",
         )
@@ -340,6 +341,20 @@ def _build_tactical_figure(phase_key, selected_player=None, step_index=None, sel
             name="Ball path",
         )
     )
+
+    if selected_player_path and len(selected_player_path) > 1:
+        fig.add_trace(
+            go.Scatter(
+                x=[pt[0] for pt in selected_player_path],
+                y=[pt[1] for pt in selected_player_path],
+                mode="lines+markers",
+                line=dict(color=COLORS["highlight"], width=3),
+                marker=dict(size=7, color=COLORS["highlight"]),
+                hoverinfo="skip",
+                name="Selected player path",
+                showlegend=False,
+            )
+        )
 
     bx, by = visible_ball_path[-1]
     fig.add_trace(
@@ -452,6 +467,7 @@ def _build_player_animation_figure(phase_key, selected_player):
         selected_player=selected_player,
         step_index=0,
         selected_player_position=player_positions[0],
+        selected_player_path=player_positions[:1],
     )
     frames = []
     for step in range(len(phase["ball_path"])):
@@ -460,6 +476,7 @@ def _build_player_animation_figure(phase_key, selected_player):
             selected_player=selected_player,
             step_index=step,
             selected_player_position=player_positions[step],
+            selected_player_path=player_positions[: step + 1],
         )
         frames.append(go.Frame(data=frame_fig.data, layout=frame_fig.layout, name=str(step)))
 
@@ -572,7 +589,7 @@ def _render_game_model_page(selected_player):
 
     st.subheader("Pitch Geography")
     zone_fig = _build_pitch_geography_figure()
-    st.plotly_chart(zone_fig, use_container_width=True, config={"displayModeBar": False})
+    st.plotly_chart(zone_fig, width="content", config={"displayModeBar": False})
 
     st.subheader("Future Canadian Player: Skill Sets / Behaviours")
     st.markdown("\n".join([f"- {item}" for item in gm["future_canadian_player"]["skill_sets_player_behaviours"]]))
@@ -595,7 +612,7 @@ def _render_tactical_board_page(selected_player):
             st.markdown(f"**System:** {phase['our_system']}  ")
             st.markdown(f"{phase['description']}")
             fig = _build_tactical_figure(phase_key, selected_player=selected_player)
-            st.plotly_chart(fig, use_container_width=True, config={"displayModeBar": False})
+            st.plotly_chart(fig, width="content", config={"displayModeBar": False})
             _render_player_card(selected_player)
 
 
@@ -609,14 +626,14 @@ def _render_attacking_defending_page(selected_player):
         st.subheader("Attacking Organization")
         st.plotly_chart(
             _build_tactical_figure("attacking_organization", selected_player=selected_player),
-            use_container_width=True,
+            width="content",
             config={"displayModeBar": False},
         )
     with right:
         st.subheader("Defensive Organization")
         st.plotly_chart(
             _build_tactical_figure("defensive_organization", selected_player=selected_player),
-            use_container_width=True,
+            width="content",
             config={"displayModeBar": False},
         )
     _render_player_card(selected_player)
@@ -635,8 +652,17 @@ def _render_movement_board_page(selected_player):
     max_step = len(phase["ball_path"]) - 1
     step = st.slider("Stepwise progression", min_value=0, max_value=max_step, value=0)
 
-    fig = _build_tactical_figure(phase_key, selected_player=selected_player, step_index=step)
-    st.plotly_chart(fig, use_container_width=True, config={"displayModeBar": False})
+    player_positions = get_player_movement_positions(phase_key, selected_player)
+    selected_player_position = player_positions[step] if player_positions and step < len(player_positions) else None
+    selected_player_path = player_positions[: step + 1] if player_positions else None
+    fig = _build_tactical_figure(
+        phase_key,
+        selected_player=selected_player,
+        step_index=step,
+        selected_player_position=selected_player_position,
+        selected_player_path=selected_player_path,
+    )
+    st.plotly_chart(fig, width="content", config={"displayModeBar": False})
 
     if step == 0:
         st.info("Step 1: Initial phase shape and first pass/press trigger.")
@@ -658,7 +684,7 @@ def _render_player_role_animation_page(selected_player):
     phase_key = phase_options[selected_phase_title]
     st.plotly_chart(
         _build_player_animation_figure(phase_key, selected_player),
-        use_container_width=True,
+        width="content",
         config={"displayModeBar": False},
     )
     _render_player_card(selected_player)
@@ -672,30 +698,30 @@ def _render_philosophy_diagrams_page(selected_player):
 
     tab_a, tab_b, tab_c = st.tabs(["Who We Are", "How Do We Coach", "How We Want to Play"])
     with tab_a:
-        st.plotly_chart(_build_content_sunburst("Who We Are", gm["who_we_are"]), use_container_width=True, config={"displayModeBar": False})
+        st.plotly_chart(_build_content_sunburst("Who We Are", gm["who_we_are"]), width="stretch", config={"displayModeBar": False})
     with tab_b:
-        st.plotly_chart(_build_content_sunburst("How Do We Coach", gm["how_do_we_coach"]), use_container_width=True, config={"displayModeBar": False})
+        st.plotly_chart(_build_content_sunburst("How Do We Coach", gm["how_do_we_coach"]), width="stretch", config={"displayModeBar": False})
     with tab_c:
         st.plotly_chart(
             _build_content_sunburst("How We Want to Play", gm["how_we_want_to_play"]),
-            use_container_width=True,
+            width="stretch",
             config={"displayModeBar": False},
         )
 
     st.subheader("Moments of the Game Connection")
-    st.plotly_chart(_build_moments_flow_figure(), use_container_width=True, config={"displayModeBar": False})
+    st.plotly_chart(_build_moments_flow_figure(), width="stretch", config={"displayModeBar": False})
 
     st.subheader("Field Geography (Zones + Channels)")
-    st.plotly_chart(_build_pitch_geography_figure(), use_container_width=True, config={"displayModeBar": False})
+    st.plotly_chart(_build_pitch_geography_figure(), width="content", config={"displayModeBar": False})
 
     st.subheader("Tactical Shape Link")
     c1, c2 = st.columns(2)
     with c1:
         st.markdown("**Attacking Organization Shape**")
-        st.plotly_chart(_build_tactical_figure("attacking_organization", selected_player=selected_player), use_container_width=True, config={"displayModeBar": False})
+        st.plotly_chart(_build_tactical_figure("attacking_organization", selected_player=selected_player), width="content", config={"displayModeBar": False})
     with c2:
         st.markdown("**Defensive Organization Shape**")
-        st.plotly_chart(_build_tactical_figure("defensive_organization", selected_player=selected_player), use_container_width=True, config={"displayModeBar": False})
+        st.plotly_chart(_build_tactical_figure("defensive_organization", selected_player=selected_player), width="content", config={"displayModeBar": False})
 
 
 all_profiles = get_player_profiles()

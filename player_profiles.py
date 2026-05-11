@@ -319,14 +319,48 @@ def get_player_movement_positions(phase_key, player_number):
         return []
 
     steps = len(phase["ball_path"])
+    tagged_movements = {}
+    for movement_step_index, arrow in enumerate(phase["movement_arrows"]):
+        if arrow["team"] != "our":
+            continue
+        numbers = [int(match) for match in PLAYER_NUMBER_PATTERN.findall(arrow["label"])]
+        if player_number in numbers:
+            tagged_movements[movement_step_index] = tuple(arrow["end"])
+
+    if tagged_movements:
+        positions = []
+        for step in range(steps):
+            # Movement arrows are ordered chronologically; apply all arrows whose index is <= current step.
+            for movement_step_index, end_position in tagged_movements.items():
+                if movement_step_index <= step:
+                    current_position = end_position
+            positions.append(current_position)
+        return positions
+
+    # Higher values apply more aggressive support movement toward the current ball location.
+    support_factors = {
+        1: 0.04,
+        2: 0.11,
+        3: 0.11,
+        4: 0.08,
+        5: 0.08,
+        6: 0.10,
+        8: 0.10,
+        7: 0.14,
+        10: 0.13,
+        11: 0.14,
+        9: 0.13,
+    }
+    support_factor = support_factors.get(player_number, 0.10)
     positions = []
     for step in range(steps):
-        # Movement arrows are ordered chronologically; apply all arrows whose index is <= current step.
-        for movement_step_index, arrow in enumerate(phase["movement_arrows"]):
-            if movement_step_index > step or arrow["team"] != "our":
-                continue
-            numbers = [int(match) for match in PLAYER_NUMBER_PATTERN.findall(arrow["label"])]
-            if player_number in numbers:
-                current_position = tuple(arrow["end"])
+        target_x, target_y = phase["ball_path"][step]
+        current_x, current_y = current_position
+        next_x = current_x + ((target_x - current_x) * support_factor)
+        next_y = current_y + ((target_y - current_y) * support_factor)
+        current_position = (
+            max(0, min(PITCH_BOUNDS["length"], next_x)),
+            max(0, min(PITCH_BOUNDS["width"], next_y)),
+        )
         positions.append(current_position)
     return positions
