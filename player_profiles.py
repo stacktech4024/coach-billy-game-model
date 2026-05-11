@@ -1,8 +1,10 @@
 """Player profiles and tactical model datasets for the Coach Billy game model app."""
 
 from copy import deepcopy
+import re
 
 PITCH_BOUNDS = {"length": 100, "width": 64}
+PLAYER_NUMBER_PATTERN = re.compile(r"#(\d+)")
 
 GAME_MODEL = {
     "who_we_are": {
@@ -301,3 +303,30 @@ def get_phase_config(phase_key):
     phase["our_positions"] = deepcopy(BASE_FORMATIONS[system])
     phase["opposition_positions"] = deepcopy(OPPOSITION_FORMATIONS[system])
     return phase
+
+
+def get_player_movement_positions(phase_key, player_number):
+    """Return a list of (x, y) coordinates per phase step for one player.
+
+    Coordinates are normalized to the 100x64 pitch used throughout the app.
+    If the player number is not present in the phase formation, an empty list is returned.
+    Movement is inferred from chronological `movement_arrows` labels that include jersey tags
+    in the format `#<number>` (for example: `#7 wide run`).
+    """
+    phase = get_phase_config(phase_key)
+    current_position = phase["our_positions"].get(player_number)
+    if current_position is None:
+        return []
+
+    steps = len(phase["ball_path"])
+    positions = []
+    for step in range(steps):
+        # Movement arrows are ordered chronologically; apply all arrows whose index is <= current step.
+        for movement_step_index, arrow in enumerate(phase["movement_arrows"]):
+            if movement_step_index > step or arrow["team"] != "our":
+                continue
+            numbers = [int(match) for match in PLAYER_NUMBER_PATTERN.findall(arrow["label"])]
+            if player_number in numbers:
+                current_position = tuple(arrow["end"])
+        positions.append(current_position)
+    return positions
