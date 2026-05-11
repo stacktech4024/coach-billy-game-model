@@ -35,6 +35,7 @@ COLORS = {
 }
 ANIMATION_FRAME_DURATION_MS = 900
 ANIMATION_TRANSITION_DURATION_MS = 250
+ANIMATION_PAUSE_DURATION_MS = 0
 MOMENTS_FALLBACK_MARGIN_X = 10
 MOMENTS_FALLBACK_WIDTH_X = 80
 MOMENTS_FALLBACK_CENTER_Y = 50
@@ -204,6 +205,7 @@ def _build_moments_flow_figure():
     moments = get_game_model()["how_we_want_to_play"]["moments_of_the_game"]
     points = [(15, 50), (50, 85), (85, 50), (50, 15)]
     if len(moments) != 4:
+        # Fallback for non-4 lists: spread nodes horizontally from left margin to right margin.
         points = [
             (
                 MOMENTS_FALLBACK_MARGIN_X + (idx * (MOMENTS_FALLBACK_WIDTH_X / max(len(moments) - 1, 1))),
@@ -482,7 +484,11 @@ def _build_player_animation_figure(phase_key, selected_player):
                             },
                         ],
                     ),
-                    dict(label="⏸ Pause", method="animate", args=[[None], {"frame": {"duration": 0, "redraw": False}, "mode": "immediate"}]),
+                    dict(
+                        label="⏸ Pause",
+                        method="animate",
+                        args=[[None], {"frame": {"duration": ANIMATION_PAUSE_DURATION_MS, "redraw": False}, "mode": "immediate"}],
+                    ),
                 ],
             )
         ],
