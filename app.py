@@ -3,10 +3,10 @@ try:
     import plotly.graph_objects as go
 except ModuleNotFoundError:
     st.error(
-        """Missing dependency: `plotly`
+        """Missing dependency: plotly
 
 Install project dependencies with:
-`pip install -r requirements.txt`"""
+pip install -r requirements.txt"""
     )
     st.stop()
 
