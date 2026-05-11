@@ -15,6 +15,7 @@ from player_profiles import (
     get_game_model,
     get_phase_config,
     get_phase_keys,
+    get_player_movement_positions,
     get_player_profile,
     get_player_profiles,
 )
@@ -153,10 +154,12 @@ def _add_zone_overlays(fig):
         fig.add_annotation(x=start + 12.5, y=62, text=label, showarrow=False, font=dict(color="white", size=10))
 
 
-def _build_tactical_figure(phase_key, selected_player=None, step_index=None):
+def _build_tactical_figure(phase_key, selected_player=None, step_index=None, selected_player_position=None):
     """Create an 11v11 tactical board for a phase with optional focus player and step index."""
     phase = get_phase_config(phase_key)
     profiles = get_player_profiles()
+    if selected_player in phase["our_positions"] and selected_player_position is not None:
+        phase["our_positions"][selected_player] = tuple(selected_player_position)
 
     fig = go.Figure()
     fig.update_layout(shapes=_pitch_shapes())
@@ -285,6 +288,109 @@ def _build_tactical_figure(phase_key, selected_player=None, step_index=None):
     return fig
 
 
+def _build_content_sunburst(title, section_data):
+    """Build an interactive sunburst chart for one game-model content section."""
+    ids = [title]
+    labels = [title]
+    parents = [""]
+    customdata = [title]
+
+    for key, value in section_data.items():
+        key_id = f"{title}:{key}"
+        ids.append(key_id)
+        labels.append(key.replace("_", " ").title())
+        parents.append(title)
+        customdata.append(key.replace("_", " ").title())
+
+        if isinstance(value, list):
+            for idx, item in enumerate(value, start=1):
+                ids.append(f"{key_id}:{idx}")
+                labels.append(f"Point {idx}")
+                parents.append(key_id)
+                customdata.append(item)
+        else:
+            ids.append(f"{key_id}:detail")
+            labels.append("Detail")
+            parents.append(key_id)
+            customdata.append(value)
+
+    fig = go.Figure(
+        go.Sunburst(
+            ids=ids,
+            labels=labels,
+            parents=parents,
+            branchvalues="total",
+            customdata=customdata,
+            hovertemplate="%{customdata}<extra></extra>",
+            insidetextorientation="radial",
+        )
+    )
+    fig.update_layout(
+        margin=dict(l=6, r=6, t=10, b=6),
+        paper_bgcolor="#0f172a",
+        font=dict(color="white"),
+    )
+    return fig
+
+
+def _build_player_animation_figure(phase_key, selected_player):
+    """Build animated tactical frames showing ball progression and selected player movement."""
+    phase = get_phase_config(phase_key)
+    player_positions = get_player_movement_positions(phase_key, selected_player)
+    if not player_positions:
+        player_positions = [phase["our_positions"].get(selected_player)] * len(phase["ball_path"])
+
+    base_fig = _build_tactical_figure(
+        phase_key,
+        selected_player=selected_player,
+        step_index=0,
+        selected_player_position=player_positions[0],
+    )
+    frames = []
+    for step in range(len(phase["ball_path"])):
+        frame_fig = _build_tactical_figure(
+            phase_key,
+            selected_player=selected_player,
+            step_index=step,
+            selected_player_position=player_positions[step],
+        )
+        frames.append(go.Frame(data=frame_fig.data, layout=frame_fig.layout, name=str(step)))
+
+    base_fig.frames = frames
+    base_fig.update_layout(
+        updatemenus=[
+            dict(
+                type="buttons",
+                direction="left",
+                x=0.01,
+                y=1.12,
+                buttons=[
+                    dict(
+                        label="▶ Play",
+                        method="animate",
+                        args=[
+                            None,
+                            {"frame": {"duration": 900, "redraw": True}, "fromcurrent": True, "transition": {"duration": 250}},
+                        ],
+                    ),
+                    dict(label="⏸ Pause", method="animate", args=[[None], {"frame": {"duration": 0, "redraw": False}, "mode": "immediate"}]),
+                ],
+            )
+        ],
+        sliders=[
+            dict(
+                active=0,
+                currentvalue={"prefix": "Step: "},
+                steps=[
+                    dict(label=str(step + 1), method="animate", args=[[str(step)], {"frame": {"duration": 0, "redraw": True}, "mode": "immediate"}])
+                    for step in range(len(phase["ball_path"]))
+                ],
+            )
+        ],
+    )
+    return base_fig
+
+
 def _render_player_card(player_number):
     """Render the selected player's profile card, skill set list, and tactical expectations."""
     profile = get_player_profile(player_number)
@@ -387,6 +493,29 @@ def _render_tactical_board_page(selected_player):
             _render_player_card(selected_player)
 
 
+def _render_attacking_defending_page(selected_player):
+    """Render two labeled tactical pitches side-by-side for attacking and defensive organization."""
+    st.title("Attacking vs Defending Organization")
+    st.caption("Two distinct tactical pitches with labeled organization, ball flow, and directional movement arrows.")
+
+    left, right = st.columns(2)
+    with left:
+        st.subheader("Attacking Organization")
+        st.plotly_chart(
+            _build_tactical_figure("attacking_organization", selected_player=selected_player),
+            use_container_width=True,
+            config={"displayModeBar": False},
+        )
+    with right:
+        st.subheader("Defensive Organization")
+        st.plotly_chart(
+            _build_tactical_figure("defensive_organization", selected_player=selected_player),
+            use_container_width=True,
+            config={"displayModeBar": False},
+        )
+    _render_player_card(selected_player)
+
+
 def _render_movement_board_page(selected_player):
     """Render stepwise player-and-ball movement progression for a selected phase."""
     st.title("Player & Ball Movement")
@@ -413,6 +542,50 @@ def _render_movement_board_page(selected_player):
     _render_player_card(selected_player)
 
 
+def _render_player_role_animation_page(selected_player):
+    """Render animated role walkthrough linked to ball movement for a selected player."""
+    st.title("Animated Player Role Walkthrough")
+    st.caption("Select a phase and run an animation showing how the chosen player and ball move together.")
+
+    phase_options = {get_phase_config(key)["title"]: key for key in get_phase_keys()}
+    selected_phase_title = st.selectbox("Select phase for animation", list(phase_options.keys()))
+    phase_key = phase_options[selected_phase_title]
+    st.plotly_chart(
+        _build_player_animation_figure(phase_key, selected_player),
+        use_container_width=True,
+        config={"displayModeBar": False},
+    )
+    _render_player_card(selected_player)
+
+
+def _render_philosophy_diagrams_page(selected_player):
+    """Render interactive game-model philosophy diagrams with tactical linkage visuals."""
+    gm = get_game_model()
+    st.title("Interactive Philosophy Diagrams")
+    st.caption("Interactive diagrams for Who We Are, How Do We Coach, and How We Want to Play.")
+
+    tab_a, tab_b, tab_c = st.tabs(["Who We Are", "How Do We Coach", "How We Want to Play"])
+    with tab_a:
+        st.plotly_chart(_build_content_sunburst("Who We Are", gm["who_we_are"]), use_container_width=True, config={"displayModeBar": False})
+    with tab_b:
+        st.plotly_chart(_build_content_sunburst("How Do We Coach", gm["how_do_we_coach"]), use_container_width=True, config={"displayModeBar": False})
+    with tab_c:
+        st.plotly_chart(
+            _build_content_sunburst("How We Want to Play", gm["how_we_want_to_play"]),
+            use_container_width=True,
+            config={"displayModeBar": False},
+        )
+
+    st.subheader("Tactical Shape Link")
+    c1, c2 = st.columns(2)
+    with c1:
+        st.markdown("**Attacking Organization Shape**")
+        st.plotly_chart(_build_tactical_figure("attacking_organization", selected_player=selected_player), use_container_width=True, config={"displayModeBar": False})
+    with c2:
+        st.markdown("**Defensive Organization Shape**")
+        st.plotly_chart(_build_tactical_figure("defensive_organization", selected_player=selected_player), use_container_width=True, config={"displayModeBar": False})
+
+
 all_profiles = get_player_profiles()
 player_options = sorted(all_profiles.keys())
 
@@ -420,7 +593,14 @@ with st.sidebar:
     st.header("Navigation")
     selected_page = st.radio(
         "Go to",
-        ["Game Model", "Dynamic Tactical Board", "Player & Ball Movement"],
+        [
+            "Game Model",
+            "Dynamic Tactical Board",
+            "Player & Ball Movement",
+            "Attacking vs Defending Organization",
+            "Animated Player Role Walkthrough",
+            "Interactive Philosophy Diagrams",
+        ],
     )
     selected_player = st.selectbox(
         "Player focus",
@@ -432,5 +612,11 @@ if selected_page == "Game Model":
     _render_game_model_page(selected_player)
 elif selected_page == "Dynamic Tactical Board":
     _render_tactical_board_page(selected_player)
-else:
+elif selected_page == "Player & Ball Movement":
     _render_movement_board_page(selected_player)
+elif selected_page == "Attacking vs Defending Organization":
+    _render_attacking_defending_page(selected_player)
+elif selected_page == "Animated Player Role Walkthrough":
+    _render_player_role_animation_page(selected_player)
+else:
+    _render_philosophy_diagrams_page(selected_player)

@@ -1,6 +1,7 @@
 """Player profiles and tactical model datasets for the Coach Billy game model app."""
 
 from copy import deepcopy
+import re
 
 PITCH_BOUNDS = {"length": 100, "width": 64}
 
@@ -301,3 +302,23 @@ def get_phase_config(phase_key):
     phase["our_positions"] = deepcopy(BASE_FORMATIONS[system])
     phase["opposition_positions"] = deepcopy(OPPOSITION_FORMATIONS[system])
     return phase
+
+
+def get_player_movement_positions(phase_key, player_number):
+    """Return stepwise player coordinates for one phase keyed to the phase ball progression."""
+    phase = get_phase_config(phase_key)
+    current_position = phase["our_positions"].get(player_number)
+    if current_position is None:
+        return []
+
+    steps = len(phase["ball_path"])
+    positions = [current_position]
+    for step in range(1, steps):
+        for arrow_index, arrow in enumerate(phase["movement_arrows"]):
+            if arrow_index > step - 1 or arrow["team"] != "our":
+                continue
+            numbers = [int(match) for match in re.findall(r"#(\d+)", arrow["label"])]
+            if player_number in numbers:
+                current_position = tuple(arrow["end"])
+        positions.append(current_position)
+    return positions

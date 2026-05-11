@@ -9,6 +9,7 @@ from player_profiles import (
     get_game_model,
     get_phase_config,
     get_phase_keys,
+    get_player_movement_positions,
     get_player_profile,
     get_player_profiles,
     mirror_positions,
@@ -97,6 +98,24 @@ class TestPhaseConfiguration(unittest.TestCase):
     def test_get_phase_config_raises_key_error_for_unknown_phase(self):
         with self.assertRaises(KeyError):
             get_phase_config("unknown_phase")
+
+    def test_get_player_movement_positions_returns_empty_for_unknown_player(self):
+        self.assertEqual(get_player_movement_positions("attacking_organization", 99), [])
+
+    def test_get_player_movement_positions_keeps_static_player_without_tagged_arrows(self):
+        positions = get_player_movement_positions("attacking_organization", 1)
+        expected_len = len(PHASES["attacking_organization"]["ball_path"])
+
+        self.assertEqual(len(positions), expected_len)
+        self.assertTrue(all(pos == positions[0] for pos in positions))
+
+    def test_get_player_movement_positions_updates_position_when_player_arrow_exists(self):
+        positions = get_player_movement_positions("attacking_organization", 7)
+
+        self.assertEqual(positions[0], BASE_FORMATIONS["1-4-4-2"][7])
+        self.assertEqual(positions[1], BASE_FORMATIONS["1-4-4-2"][7])
+        self.assertEqual(positions[2], (69, 56))
+        self.assertTrue(all(pos == (69, 56) for pos in positions[2:]))
 
 
 class TestOppositionFormationIntegrity(unittest.TestCase):
