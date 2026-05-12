@@ -21,7 +21,7 @@ pip install -r requirements.txt
 # Run the app
 streamlit run app.py
 ```
-
+python3 -m streamlit run app.py
 ### Deployment
 - **Streamlit Community Cloud:** One-click deploy from this repo for free public hosting.
 - **Vercel or Other Cloud Providers:** Use a Dockerfile or adapters if you want advanced routing/pages.
